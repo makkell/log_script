@@ -49,8 +49,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Анализ логов")
     parser.add_argument('--files', help="Файлы логов через пробел", type=str)
     parser.add_argument('--date', help="Дата в формате dd.mm или диапазон dd.mm-dd.mm", type=str)
+    parser.add_argument('--report',help="Тип отчета: average", type=str)
     args = parser.parse_args()
 
     headers = ['url', 'total', 'avg_response_time']
-    data = unpack(read_log(args.files, date=args.date))
-    print_table(data, headers)
+    if args.report == "average":
+        data = unpack(read_log(args.files, date=args.date))
+        print_table(data, headers)
+    else:
+        print(f"Отчет {args.report} не поддерживается")
