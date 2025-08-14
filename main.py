@@ -1,7 +1,7 @@
 import json
-from pprint import pprint
 from tabulate import tabulate
 from datetime import datetime
+import argparse
 
 def unpack(data):
     return [[endpoint, values['count'], values['response_time']] for endpoint, values in data.items()]
@@ -14,9 +14,10 @@ def print_table(table, headers):
 def read_log(file_paths, date=None):
     files = file_paths.split()
     data_dict = {}
-    date = date.split('-')
-    start_date = datetime.strptime(f"{date[0]}.2025", '%d.%m.%Y')
-    end_date = datetime.strptime(f"{date[1]}.2025", '%d.%m.%Y') if len(date) > 1 else None
+
+    date = date.split('-') if date else None
+    start_date = datetime.strptime(f"{date[0]}.2025", '%d.%m.%Y') if date else None
+    end_date = datetime.strptime(f"{date[1]}.2025", '%d.%m.%Y') if date and len(date) > 1 else None
     for file in files:
         with open(file) as log_file:
             for line in log_file:
@@ -25,10 +26,10 @@ def read_log(file_paths, date=None):
                 try:
                     data_log = json.loads(line)
                     ts = datetime.fromisoformat(data_log['@timestamp']).replace(tzinfo=None)
-                    if end_date:
+                    if date and end_date:
                         if not (start_date <= ts <= end_date):
                             continue
-                    else:
+                    elif date:
                         if not (start_date.day == ts.day):
                             continue
                     url = data_log['url']
@@ -45,7 +46,11 @@ def read_log(file_paths, date=None):
 
 
 if __name__ == '__main__':
-    # pprint(read_log('example1.log', date="06.01-06.03"))
+    parser = argparse.ArgumentParser(description="Анализ логов")
+    parser.add_argument('--files', help="Файлы логов через пробел", type=str)
+    parser.add_argument('--date', help="Дата в формате dd.mm или диапазон dd.mm-dd.mm", type=str)
+    args = parser.parse_args()
+
     headers = ['url', 'total', 'avg_response_time']
-    data = unpack(read_log('example1.log example2.log', date="22.06"))
+    data = unpack(read_log(args.files, date=args.date))
     print_table(data, headers)
